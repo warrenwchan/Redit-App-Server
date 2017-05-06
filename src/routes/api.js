@@ -1,30 +1,47 @@
 const fs = require('fs');
 const path = require('path');
+const pg = require('pg');
+const jwt = require('jsonwebtoken');
+
+import { pool } from '../app';
 
 module.exports = function(router) {
 
-    //RESTFUL API
-    router.get('/weeks', (req, res) => {
-    const mockdata = fs.readFileSync(path.resolve(__dirname, './../database/mockdata.json'));
-    const weeks = JSON.parse(mockdata).weeks;
-    res.status(200).json(weeks)
-})
+  router.get('/lesson/:lessonid/posts', (req, res) => {
+    pool.query('SELECT * FROM posts', (err, posts) => {
 
-    router.get('/lessons/:lesson_id/posts', (req, res) => {
-        const mockdata = fs.readFileSync(path.resolve(__dirname, './../database/mockdata.json'));
-        const posts     = JSON.parse(mockdata).posts
-                            .filter(function(post) {
-                                return post.lessons.find(function(lesson) {
-                                    return lesson.id === req.params.lesson_id
-                                })
-                            })
-        if(posts.length) {
-            res.status(200).json(posts)
-        } else {
-            res.status(404).send()
-        }
+      if(err) return res.status(500).send();
+      return res.status(200).json(posts.rows);
+    });
+  });
+
+  router.get('/weeks', (req, res) => {
+    if(!req.cookies.redit_session) return res.status(403).send();
+    const session = jwt.decode(req.cookies.redit_session);
+
+    pool.query(`SELECT * FROM users WHERE email='${session.user_email}';`)
+    .then((err, users) => {
+      if(users && useres.rows.length) {
+
+      pool.query('SELECT * FROM weeks', (err, weeks) => {
+      if(err) return res.status(500).send(err)
+
+        pool.query('SELECT * FROM lessons', (err, lessons) => {
+          if(err) return res.status(500).send(err)
+          const response = weeks.rows.map(week => {
+            return Object.assign({}), {
+              title: week.title,
+              lessons: lessons.rows.filter(lesson => lesson.week_id === week.id)
+            };
+          })
+          res.send(response);
+        });
+      });
+
+      } else {
+        return res.status(403).send();
+      }
     })
-
-    return router;
-
-}
+  });
+  return router;
+};
