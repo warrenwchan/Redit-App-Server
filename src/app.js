@@ -1,8 +1,6 @@
 import express from 'express'
 import { resolve } from 'path'
-
 import fallback from 'express-history-api-fallback';
-
 import config from '../config'
 
 const root = resolve(process.cwd(), config.get('STATIC_PATH'));
@@ -10,7 +8,7 @@ const app = express()
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors')
-const Pool = require('pg').Pool;
+const pg = require('pg');
 const json = require('body-parser').json;
 const cookieParser = require('cookie-parser');
 
@@ -22,20 +20,20 @@ const pgConfig = {
   password: 'keys',
   database: 'reditscratch',
   port: 5432,
-  host: 'localhost'
+  host: 'localhost',
 };
 
-const pool = new Pool(pgConfig);
+const pool = new pg.Pool(pgConfig);
 
-const apiRoutes = require('./routes/api')
-const authRoutes = require('./routes/auth')
+const apiRoutes = require('./routes/api.js')
+// const authRoutes = require('./routes/auth')
 
 app.use(cors());
 app.use(json());
-app.use(cookieParser());
+// app.use(cookieParser());
 
 app.use('/api', apiRoutes(apiRouter))
-app.use('/auth', authRoutes(authRouter))
+// app.use('/auth', authRoutes(authRouter))
 
 app.use(fallback('index.html', { root }));
 
